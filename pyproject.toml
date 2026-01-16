@@ -1,0 +1,36 @@
+[project]
+name = "db2model"
+version = "0.1.0.post5"
+description = "Generate typed models from your database for Python, Go, and TypeScript."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name="Alix Paradis", email="alix.paradis00@gmail.com"}]
+license = "MIT"
+keywords = ["db", "codegen", "models", "sqlalchemy", "typescript", "golang"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "autoflake>=2.3.0",
+    "black>=24.8.0",
+    "isort>=7.0.0",
+    "pydantic-settings>=0.8.0",
+    "python-dotenv>=1.2.0",
+    "sqlalchemy>=2.0",
+    "typer>=0.15.0",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+"Homepage" = "https://github.com/AlixPa/db2model"
+"Source" = "https://github.com/AlixPa/db2model"
+"Bug Tracker" = "https://github.com/AlixPa/db2model/issues"
