@@ -1,4 +1,6 @@
 from sqlalchemy import Column as ALC_Column
+from sqlalchemy import Table as ALC_Table
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.postgresql import CHAR, TIMESTAMP, UUID, VARCHAR
 
 from db2model.models import Column
@@ -7,11 +9,26 @@ from db2model.types import SqlDialect
 from .utils import _python_type
 
 
-def _generate_column(col: ALC_Column) -> Column:
+def _is_column_unique(table: ALC_Table, col: ALC_Column) -> bool:
+    col_name = col.name
+    for constraint in table.constraints:
+        if isinstance(constraint, UniqueConstraint):
+            if [col.name for col in constraint.columns] == [col_name]:
+                return True
+
+    for idx in table.indexes:
+        if idx.unique and [col.name for col in idx.columns] == [col_name]:
+            return True
+
+    return False
+
+
+def _generate_column(table: ALC_Table, col: ALC_Column) -> Column:
     return Column(
         name=col.name,
         nullable=bool(col.nullable),
-        init=bool(col.primary_key or col.foreign_keys),
+        unique=_is_column_unique(table, col),
+        init=not bool(col.primary_key or col.foreign_keys),
         alchemy_type=col.type,
         is_primary_key=col.primary_key,
         foreign_key_full_name=(
@@ -61,6 +78,9 @@ def _generate_column_code(column: Column, sql_dialect: SqlDialect) -> str:
         args.append("default=None")
     else:
         args.append("nullable=False")
+
+    if column.unique:
+        args.append("unique=True")
 
     if column.is_primary_key or column.foreign_key_full_name:
         args.append("init=False")

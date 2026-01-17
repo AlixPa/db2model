@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class Column(BaseModel):
     name: str
     nullable: bool
+    unique: bool
     is_primary_key: bool
     alchemy_type: Any
     python_type: str

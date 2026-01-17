@@ -12,7 +12,7 @@ def _generate_table(table: ALC_Table) -> Table:
         sql_name=table.name,
         filename=table.name[:-1],
         python_name=_python_table_name(table.name[:-1]),
-        columns=[_generate_column(col) for col in table.columns],
+        columns=[_generate_column(table, col) for col in table.columns],
     )
 
 
