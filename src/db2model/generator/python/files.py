@@ -1,25 +1,13 @@
-import shutil
-from logging import Logger
 from pathlib import Path
 
-from sqlalchemy import MetaData, create_engine, text
-
-from db2model.config.settings import Db2ModelSettings
-from db2model.models import Table
+from db2model.models import TableDef
 from db2model.types import SqlDialect
 
-from .table import _generate_table, _generate_table_code
-from .templates import POSTGRES_TABLE_FILE_TEMPLATE
-from .utils import _formate_code, _schema_to_ignore, _table_to_ignore
+from .utils import _formate_code, _python_table_name
 
 
-def _generate_empty_init_file(output_path: Path) -> None:
-    with open(output_path / "__init__.py", "w") as f:
-        f.write("__all__ = []\n")
-
-
-def _generate_base_file(output_path: Path) -> None:
-    base_code = "\n".join(
+def _code_base_file() -> str:
+    return "\n".join(
         [
             "from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass",
             "",
@@ -28,111 +16,79 @@ def _generate_base_file(output_path: Path) -> None:
             "",
         ]
     )
-    with open(output_path / "base.py", "w") as f:
-        f.write(base_code)
 
 
-def _generate_init_file(tables: list[Table], output_folder_path: Path) -> None:
-    lines: list[str] = []
-    for table in tables:
-        lines.append(f"from .{table.filename} import {table.python_name}")
-
+def _write_code_init_file(
+    folder_path: Path, lines_import: list[str], lines__all__: list[str]
+) -> None:
+    lines: list[str] = list()
+    lines.extend(lines_import)
     lines.append("__all__ = [")
-
-    for table in tables:
-        lines.append(f'"{table.python_name}",')
-
+    lines.extend(lines__all__)
     lines.append("]")
-
-    code = "\n".join(lines)
-
-    with open(output_folder_path / "__init__.py", "w") as f:
-        f.write(_formate_code(code))
+    with open(folder_path / "__init__.py", "w") as f:
+        f.write(_formate_code("\n".join(lines)))
 
 
-def generate_python_models(settings: Db2ModelSettings, logger: Logger) -> None:
-    settings.output_folder_path.mkdir(parents=True, exist_ok=True)
-
-    _generate_empty_init_file(settings.output_folder_path)
-    _generate_base_file(settings.output_folder_path)
-
-    match settings.db_settings.sql_dialect:
+def _generate_all_init_files(
+    python_rootpath: Path, tables_def: list[TableDef], sql_dialect: SqlDialect
+) -> None:
+    match sql_dialect:
         case SqlDialect.POSTGRESQL:
-            for db_name in settings.db_names:
-                db_table_created_cnt = 0
-
-                db_output_folder_path = settings.output_folder_path / db_name
-                if db_output_folder_path.exists():
-                    shutil.rmtree(db_output_folder_path)
-                db_output_folder_path.mkdir(parents=True, exist_ok=True)
-
-                _generate_empty_init_file(db_output_folder_path)
-
-                engine = create_engine(settings.db_settings.db_url(db_name))
-                with engine.connect() as conn:
-                    result = conn.execute(
-                        text("SELECT schema_name FROM information_schema.schemata")
+            db_to_schema_to_tables_map: dict[str, dict[str, list[str]]] = dict()
+            for table_def in tables_def:
+                db_name = table_def.db_name
+                schema_name = table_def.schema_name
+                table_name = table_def.table_name
+                if not schema_name:
+                    raise ValueError(
+                        f"Postgresql tables should have schema defined, {db_name=}, {schema_name=}, {table_name=}."
                     )
-                    schema_names: list[str] = [row[0] for row in result]
+                db_to_schema_to_tables_map.setdefault(db_name, dict()).setdefault(
+                    schema_name, list()
+                ).append(table_name)
 
-                for schema_name in schema_names:
-                    if _schema_to_ignore(schema_name, settings):
-                        logger.info(f"Ignored schema, {schema_name=}.")
+            for db_name, schema_to_tables_map in db_to_schema_to_tables_map.items():
+                lines_db_import: list[str] = list()
+                lines_db__all__: list[str] = list()
+                for schema_name, tables_name in schema_to_tables_map.items():
+                    if not tables_name:
                         continue
 
-                    engine = create_engine(
-                        settings.db_settings.db_url(db_name, schema_name=schema_name)
-                    )
-                    metadata = MetaData()
-                    metadata.reflect(bind=engine)
+                    lines_db_import.append(f"from .{schema_name} import (")
 
-                    schema_tables: list[Table] = list()
-                    for table_name, alc_table in metadata.tables.items():
-                        if _table_to_ignore(db_name, schema_name, table_name, settings):
-                            logger.info(
-                                f"Ignored table, {schema_name=}, {table_name=}."
-                            )
-                            continue
-                        schema_tables.append(_generate_table(alc_table))
-
-                    db_table_created_cnt += len(schema_tables)
-                    schema_output_folder_path = db_output_folder_path / schema_name
-                    schema_output_folder_path.mkdir(parents=True)
-                    for table in schema_tables:
-                        with open(
-                            schema_output_folder_path / f"{table.filename}.py", "w"
-                        ) as f:
-                            f.write(
-                                _formate_code(
-                                    "\n".join(
-                                        [
-                                            POSTGRES_TABLE_FILE_TEMPLATE,
-                                            _generate_table_code(
-                                                schema_name,
-                                                table,
-                                                settings.db_settings.sql_dialect,
-                                            ),
-                                        ]
-                                    )
-                                )
-                            )
-                        logger.info(
-                            f"Generated table model code block, {schema_name=}, {table.sql_name=}."
+                    lines_schema_import: list[str] = list()
+                    lines_schema__all__: list[str] = list()
+                    for table_name in tables_name:
+                        python_table_name = _python_table_name(table_name)
+                        lines_db_import.append(f"{python_table_name},")
+                        lines_db__all__.append(f'"{python_table_name}",')
+                        lines_schema_import.append(
+                            f"from .{table_name} import {python_table_name}"
                         )
-                    _generate_init_file(schema_tables, schema_output_folder_path)
-                    logger.info(
-                        f"Generated schema models, {schema_name=}, {len(schema_tables)=}."
+                        lines_schema__all__.append(f'"{python_table_name}",')
+
+                    lines_db_import.append(f")")
+
+                    folder_path = python_rootpath / db_name / schema_name
+                    folder_path.mkdir(parents=True, exist_ok=True)
+                    _write_code_init_file(
+                        folder_path,
+                        lines_schema_import,
+                        lines_schema__all__,
                     )
 
-                    if not schema_tables and settings.remove_empty_folders:
-                        shutil.rmtree(schema_output_folder_path)
-                        logger.info(
-                            f"No tables generated for {schema_name=}, removing folder."
-                        )
+                if not lines_db_import:
+                    return
 
-                if not db_table_created_cnt and settings.remove_empty_folders:
-                    shutil.rmtree(db_output_folder_path)
-                    logger.info(f"No tables generated for {db_name=}, removing folder.")
+                folder_path = python_rootpath / db_name
+                folder_path.mkdir(parents=True, exist_ok=True)
+                _write_code_init_file(
+                    folder_path,
+                    lines_db_import,
+                    lines_db__all__,
+                )
+
         case _:
             raise ValueError(
                 f"No support yet for the {settings.db_settings.sql_dialect=}"
