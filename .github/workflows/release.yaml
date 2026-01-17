@@ -2,21 +2,42 @@ name: Publish to PyPI
 
 on:
   push:
+    branches:
+      - main  # Triggers TestPyPI
     tags:
-      - 'v*'
+      - 'v*'   # Triggers Official PyPI
 
 jobs:
-  build-n-publish:
+  publish-test:
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-      - name: Build
-        run: uv build
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: astral-sh/setup-uv@v5
+      - name: Build and Publish to TestPyPI
+        run: |
+          uv build
+          uv publish --publish-url https://test.pypi.org/legacy/
+
+  publish-official:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build and Publish to PyPI
+        run: |
+          uv build
+          uv publish

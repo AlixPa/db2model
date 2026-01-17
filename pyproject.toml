@@ -1,6 +1,6 @@
 [project]
 name = "db2model"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Generate typed models from your database for Python, Go, and TypeScript."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,8 +32,17 @@ dependencies = [
 db2model = "db2model.cli:main"
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["db2model"]
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
 
 [project.urls]
 "Homepage" = "https://github.com/AlixPa/db2model"
