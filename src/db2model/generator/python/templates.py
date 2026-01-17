@@ -1,4 +1,5 @@
-POSTGRES_SCHEMA_FILE = """import datetime
+POSTGRES_TABLE_FILE_TEMPLATE = """from __future__ import annotations
+import datetime
 import uuid
 from typing import Any
 
@@ -20,5 +21,5 @@ from sqlalchemy.dialects.postgresql import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..base import Base
+from ...base import Base
 """

@@ -21,6 +21,7 @@ def generate(
     db_port: int,
     db_name: str,
     output_path: str,
+    remove_empty_folders: bool = True,
 ):
     """
     Generate models from the database.
@@ -29,12 +30,13 @@ def generate(
 
     settings = Db2ModelSettings(
         output_folder_path=Path(output_path).resolve(),
+        remove_empty_folders=remove_empty_folders,
+        db_names=[db_name],
         db_settings=DbSettings(
             user=db_user,
             password=db_password,
             host=db_host,
             port=db_port,
-            db_name=db_name,
             sql_dialect=dialect,
         ),
     )

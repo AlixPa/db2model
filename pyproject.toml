@@ -1,6 +1,6 @@
 [project]
 name = "db2model"
-version = "0.1.0.post5"
+version = "0.1.0.post6"
 description = "Generate typed models from your database for Python, Go, and TypeScript."
 readme = "README.md"
 requires-python = ">=3.10"

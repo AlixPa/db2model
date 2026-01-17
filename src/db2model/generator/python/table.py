@@ -10,6 +10,7 @@ from .utils import _formate_code, _python_table_name
 def _generate_table(table: ALC_Table) -> Table:
     return Table(
         sql_name=table.name,
+        filename=table.name[:-1],
         python_name=_python_table_name(table.name[:-1]),
         columns=[_generate_column(col) for col in table.columns],
     )
