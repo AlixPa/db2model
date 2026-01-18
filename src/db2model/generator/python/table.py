@@ -156,8 +156,8 @@ def _set_table_inits_false(
         if not column_match:
             continue
         column_name = column_match.group(1)
-        # Default init false columns
-        if column_name in init_false_columns:
+        # Nullable column without default value
+        if column_name in init_false_columns and ", server_default=" not in line:
             lines_to_init_false.add(line)
             continue
         # Foreign parents to prevent typing issues
