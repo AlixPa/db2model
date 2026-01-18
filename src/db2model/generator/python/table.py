@@ -123,7 +123,7 @@ def _set_table_default_none(table_def: TableDef) -> None:
     for line in table_def.raw_str.split("\n"):
         column_match = re.search(r"^ {4}([a-z_]+):", line)
         if column_match:
-            if "Mapped[Optional" in line:
+            if "Mapped[Optional" in line and ", server_default=" not in line:
                 nullable_lines.append("    " + line.strip()[:-1] + ",default=None)")
             else:
                 not_nullable_lines.append(line)
@@ -157,7 +157,7 @@ def _set_table_inits_false(
             continue
         column_name = column_match.group(1)
         # Nullable column without default value
-        if column_name in init_false_columns and ", server_default=" not in line:
+        if column_name in init_false_columns:
             lines_to_init_false.add(line)
             continue
         # Foreign parents to prevent typing issues
