@@ -23,6 +23,8 @@ def generate_python_models(settings: Db2ModelSettings, logger: Logger) -> None:
     _run_sqlacodegen(settings, logger)
     with open(settings.path_settings.python_path / "base.py", "w") as f:
         f.write(_formate_code(_code_base_file()))
+    with open(settings.path_settings.python_path / "__init__.py", "w") as f:
+        f.write(_formate_code("__all__ = []\n"))
 
     for db_name in settings.db_names:
         imports_raw_texts: set[str] = {"from typing import TYPE_CHECKING"}

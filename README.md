@@ -208,8 +208,8 @@ class Sessions(Base):
 
 - Two tables within the same database cannot have the same name.
 - In python models, `init=False` is only applied to child tables if the column holding the foreign key starts with the name of the parent table;
-  - If the parent table is `user` and the column is `user_id`, behaves as expected.
-  - If the parent table is `user` and the column is `agent_id`, then `init=False` will not be applied.
+  - If the parent table is `users` and the column is `user_id`, behaves as expected.
+  - If the parent table is `users` and the column is `agent_id`, then `init=False` will not be applied.
 - Does not support cross-db foreign constraint (neither SqlAlchemy though).
 
 ## License
