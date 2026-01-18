@@ -17,6 +17,9 @@ class DbSettings(BaseSettings):
 
     sql_dialect: SqlDialect
 
+    # Postgresql specific, usually "public"
+    default_schema: str | None = None
+
     def db_url(self, db_name: str, schema_name: str | None = None) -> str:
         match self.sql_dialect:
             case SqlDialect.POSTGRESQL:

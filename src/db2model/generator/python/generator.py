@@ -113,6 +113,7 @@ def generate_python_models(settings: Db2ModelSettings, logger: Logger) -> None:
                 final_imports_raw_text,
                 table_def,
                 settings.db_settings.sql_dialect,
+                settings.db_settings.default_schema,
             )
 
             with open(

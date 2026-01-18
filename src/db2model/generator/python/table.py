@@ -6,19 +6,54 @@ from db2model.types import SqlDialect
 from .utils import _python_table_name
 
 
+def _fix_cross_schema_foreign_key_postgres(raw_str: str, default_schema: str) -> str:
+    lines: list[str] = list()
+    fk_line_re = re.compile(r"ForeignKeyConstraint\(\[[^\]]*\],\s*\[([^\]]*)\]")
+    target_re = re.compile(r"'([^']+)'")
+    no_schema_re = re.compile(r"^[^.]+\.[^.]+$")
+
+    for line in raw_str.split("\n"):
+        foreign_match = fk_line_re.search(line)
+        if not foreign_match:
+            lines.append(line)
+            continue
+
+        targets_block = foreign_match.group(1)
+        targets = target_re.findall(targets_block)
+
+        fixed_targets = []
+        for t in targets:
+            if no_schema_re.match(t):
+                fixed_targets.append(f"{default_schema}.{t}")
+            else:
+                fixed_targets.append(t)
+
+        new_block = ", ".join(f'"{t}"' for t in fixed_targets)
+        lines.append(
+            line[: foreign_match.start(1)] + new_block + line[foreign_match.end(1) :]
+        )
+
+    return "\n".join(lines)
+
+
 def _get_table_code(
     imports_raw_text: str,
     table_def: TableDef,
     sql_dialect: SqlDialect,
+    default_schema: str | None = None,
 ) -> str:
     match sql_dialect:
         case SqlDialect.POSTGRESQL:
+            if not default_schema:
+                raise ValueError("Need to provide a default schema for postgresql.")
             return (
                 imports_raw_text
                 + "\n"
                 + _get_table_imports_code(table_def)
                 + "\n"
-                + table_def.raw_str
+                + _fix_cross_schema_foreign_key_postgres(
+                    table_def.raw_str, default_schema
+                )
             )
         case _:
             raise ValueError(
