@@ -48,8 +48,8 @@ class PathSettings(BaseSettings):
         return path
 
     @property
-    def python_path(self) -> Path:
-        path = self.output_folder_root_path / "python"
+    def python_models_path(self) -> Path:
+        path = self.output_folder_root_path / "python" / "models"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -92,13 +92,13 @@ class PathSettings(BaseSettings):
                     raise RuntimeError(
                         "Schema name must be provided when using postgresql."
                     )
-                base_folder_path = self.python_path / db_name / schema_name
+                base_folder_path = self.python_models_path / db_name / schema_name
             case _:
                 raise ValueError(f"No support yet for the {sql_dialect=}")
 
         match language:
             case Language.PYTHON:
-                folder_path = self.python_path / base_folder_path
+                folder_path = self.python_models_path / base_folder_path
                 folder_path.mkdir(parents=True, exist_ok=True)
                 return folder_path / f"{table_name}.py"
             case _:

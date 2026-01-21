@@ -90,26 +90,31 @@ Will generate
 
 ```text
 dest_folder/
+├── raw/
+│   ├── <...>.py
+│   └── ...
 ├── python/
-│   ├── my_app1/
-│   │   ├── __init__.py
-│   │   ├── auth/
-│   │   │   ├── __init__.py
-│   │   │   ├── table1.py
-│   │   │   ├── ...
-│   │   │   └── tableN.py
-│   │   ├── app1_schema1/
-│   │   │   └── ...
-│   │   ├── app1_schema2/
-│   │   │   └── ...
-│   └── my_app2/
-│       ├── __init__.py
-│       ├── public/
-│       │   └── ...
-│       └── app2_schema1/
-│           └── ...
+│   └── models/
+│       ├── my_app1/
+│       │   ├── __init__.py
+│       │   ├── auth/
+│       │   │   ├── __init__.py
+│       │   │   ├── table1.py
+│       │   │   ├── ...
+│       │   │   └── tableN.py
+│       │   ├── app1_schema1/
+│       │   │   └── ...
+│       │   ├── app1_schema2/
+│       │       └── ...
+│       └── my_app2/
+│           ├── __init__.py
+│           ├── public/
+│           │   └── ...
+│           └── app2_schema1/
+│               └── ...
 ├── go/
-│   ├── my_app1/
+│   ├── models/
+│   │   ├── my_app1/
 ...
 ```
 

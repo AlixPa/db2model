@@ -13,9 +13,10 @@ app = typer.Typer()
 
 
 @app.command()
-def version():
-    """Print the version."""
-    print("0.1.0")
+def hello():
+    print(
+        "This command is just here to prevent Typer to default generate command to empty command."
+    )
 
 
 @app.command()
