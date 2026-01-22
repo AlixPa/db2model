@@ -25,7 +25,8 @@ def generate(
     db_url: str = typer.Option(
         ..., help="Database url. Ex. postgresql://user:pass@localhost:5432/mydb"
     ),
-    output_path: str = typer.Option(..., help="Output path. Ex. ./models"),
+    out_py: str = typer.Option(..., help="Output python models path. Ex. ./models"),
+    out_raw: str = typer.Option(..., help="Output raws path. Ex. ./raw"),
     ignored_tables: list[str] = typer.Option(
         list(),
         help="List of tables to ignore. You can use this flag multiple times.",
@@ -62,15 +63,19 @@ def generate(
 
     logger.info(f"Generating models for {dialect=}, {lang=}.")
     settings = Db2ModelSettings(
-        path_settings=PathSettings(output_folder_root_path=Path(output_path).resolve()),
-        db_names=[db_name],
-        db_to_schemas={db_name: schemas},
+        path_settings=PathSettings(
+            output_python_models_path=Path(out_py).resolve(),
+            output_raw_path=Path(out_raw).resolve(),
+        ),
         globally_ignored_tables=ignored_tables,
+        schemas=schemas,
         db_settings=DbSettings(
             user=db_user,
             password=db_password,
             host=db_host,
             port=db_port,
+            db_name=db_name,
+            default_schema="public",
             sql_dialect=dialect,
         ),
     )

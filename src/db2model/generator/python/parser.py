@@ -7,7 +7,7 @@ from db2model.types import SqlDialect
 from .constants import EMPTY_FILE_TEMPLATE
 
 
-def _parse_table(raw: str, db_name: str, sql_dialect: SqlDialect) -> TableDef:
+def _parse_table(raw: str, sql_dialect: SqlDialect) -> TableDef:
     name_match = re.search(r"__tablename__\s*=\s*['\"]([^'\"]+)['\"]", raw)
     if not name_match:
         raise ValueError(
@@ -27,7 +27,6 @@ def _parse_table(raw: str, db_name: str, sql_dialect: SqlDialect) -> TableDef:
     return TableDef(
         raw_str=raw,
         table_name=name_match.group(1),
-        db_name=db_name,
         schema_name=schema_name,
     )
 
@@ -44,7 +43,7 @@ def _clean_table_raw(raw_str: str) -> str:
 
 
 def _parse_file(
-    filepath: Path, db_name: str, sql_dialect: SqlDialect
+    filepath: Path, sql_dialect: SqlDialect
 ) -> tuple[str, list[TableDef]] | None:
     """(imports_raw_text, list_tables), None if file has no tables"""
 
@@ -69,5 +68,5 @@ def _parse_file(
         class_split = "\nclass " + class_split
         clean_str = _clean_table_raw(class_split)
         if clean_str:
-            tables_def.append(_parse_table(clean_str, db_name, sql_dialect))
+            tables_def.append(_parse_table(clean_str, sql_dialect))
     return imports_raw_text, tables_def

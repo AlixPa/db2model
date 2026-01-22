@@ -33,22 +33,24 @@ from db2model.config import Db2ModelSettings, DbSettings, PathSettings
 from db2model.generator.python import generate_python_models
 from db2model.types import SqlDialect
 
-from .config import db2model_settings
-
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger()
 
 db2model_settings = Db2ModelSettings(
-    path_settings=PathSettings(output_folder_root_path=Path("./dest_folder")),
+    path_settings=PathSettings(
+        output_python_models_path=Path(OUT_PY).resolve(),
+        output_raw_path=Path(OUT_RAW).resolve(),
+    ),
     db_settings=DbSettings(
-        user=postgres_config.user,
-        password=postgres_config.password,
-        host=postgres_config.host,
-        port=postgres_config.port,
+        user="user",
+        password="password",
+        host="localhost",
+        port=5432,
+        db="my_db",
+        default_schema="public",
         sql_dialect=SqlDialect.POSTGRESQL,
     ),
-    db_names=["my_db1", "my_db2"],
     globally_ignored_tables=[
         "_yoyo_log",
         "_yoyo_migration",
@@ -56,25 +58,16 @@ db2model_settings = Db2ModelSettings(
         "yoyo_lock",
         "spatial_ref_sys",
     ],
-    db_to_ignored_tables_map={"my_db1": ["specific_table"]},
 
     ## Specific to Postgresql
-    db_to_schemas={
-        "my_db1": ["auth", "app1_schema1", "app1_schema2"],
-        "my_db2": ["public", "app2_schema1"],
-    },
-    globally_ignored_schemas=["cron", "information_schema", "topology"],
-    db_to_schemas_to_ignored_tables_map={
-        "my_db1": {
-            "auth": ["specific_table_of_auth"],
-        },
-        "my_db2": {
-            "public": ["specific_table_of_public"],
-            "app2_schema1": [
-                "specific_table_of_schema1",
-                "other_specific_table_of_schema1",
-            ],
-        },
+    schemas=["auth", "public", "schema1"],
+    schema_to_ignored_tables_map={
+        "auth": ["specific_table_of_auth"],
+        "public": ["specific_table_of_public"],
+        "schema1": [
+            "specific_table_of_schema1",
+            "other_specific_table_of_schema1",
+        ],
     },
 
     ## Specific to python typing
@@ -89,33 +82,21 @@ if __name__ == "__main__":
 Will generate
 
 ```text
-dest_folder/
-├── raw/
-│   ├── <...>.py
+OUT_RAW/
+├── <...>.py
+└── ...
+
+OUT_PY/
+├── __init__.py
+├── auth/
+│   ├── __init__.py
+│   ├── table1.py
+│   ├── ...
+│   └── tableN.py
+├── public/
 │   └── ...
-├── python/
-│   └── models/
-│       ├── my_app1/
-│       │   ├── __init__.py
-│       │   ├── auth/
-│       │   │   ├── __init__.py
-│       │   │   ├── table1.py
-│       │   │   ├── ...
-│       │   │   └── tableN.py
-│       │   ├── app1_schema1/
-│       │   │   └── ...
-│       │   ├── app1_schema2/
-│       │       └── ...
-│       └── my_app2/
-│           ├── __init__.py
-│           ├── public/
-│           │   └── ...
-│           └── app2_schema1/
-│               └── ...
-├── go/
-│   ├── models/
-│   │   ├── my_app1/
-...
+└── schema1/
+    └── ...
 ```
 
 ### Using cli

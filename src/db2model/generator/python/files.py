@@ -35,59 +35,55 @@ def _generate_all_init_files(
 ) -> None:
     match sql_dialect:
         case SqlDialect.POSTGRESQL:
-            db_to_schema_to_tables_map: dict[str, dict[str, list[str]]] = dict()
+            schema_to_tables_map: dict[str, list[str]] = dict()
             for table_def in tables_def:
-                db_name = table_def.db_name
                 schema_name = table_def.schema_name
                 table_name = table_def.table_name
                 if not schema_name:
                     raise ValueError(
-                        f"Postgresql tables should have schema defined, {db_name=}, {schema_name=}, {table_name=}."
+                        f"Postgresql tables should have schema defined, {schema_name=}, {table_name=}."
                     )
-                db_to_schema_to_tables_map.setdefault(db_name, dict()).setdefault(
-                    schema_name, list()
-                ).append(table_name)
+                schema_to_tables_map.setdefault(schema_name, list()).append(table_name)
 
-            for db_name, schema_to_tables_map in db_to_schema_to_tables_map.items():
-                lines_db_import: list[str] = list()
-                lines_db__all__: list[str] = list()
-                for schema_name, tables_name in schema_to_tables_map.items():
-                    if not tables_name:
-                        continue
+            lines_db_import: list[str] = list()
+            lines_db__all__: list[str] = list()
+            for schema_name, tables_name in schema_to_tables_map.items():
+                if not tables_name:
+                    continue
 
-                    lines_db_import.append(f"from .{schema_name} import (")
+                lines_db_import.append(f"from .{schema_name} import (")
 
-                    lines_schema_import: list[str] = list()
-                    lines_schema__all__: list[str] = list()
-                    for table_name in tables_name:
-                        python_table_name = _python_table_name(table_name)
-                        lines_db_import.append(f"{python_table_name},")
-                        lines_db__all__.append(f'"{python_table_name}",')
-                        lines_schema_import.append(
-                            f"from .{table_name} import {python_table_name}"
-                        )
-                        lines_schema__all__.append(f'"{python_table_name}",')
-
-                    lines_db_import.append(f")")
-
-                    folder_path = python_rootpath / db_name / schema_name
-                    folder_path.mkdir(parents=True, exist_ok=True)
-                    _write_code_init_file(
-                        folder_path,
-                        lines_schema_import,
-                        lines_schema__all__,
+                lines_schema_import: list[str] = list()
+                lines_schema__all__: list[str] = list()
+                for table_name in tables_name:
+                    python_table_name = _python_table_name(table_name)
+                    lines_db_import.append(f"{python_table_name},")
+                    lines_db__all__.append(f'"{python_table_name}",')
+                    lines_schema_import.append(
+                        f"from .{table_name} import {python_table_name}"
                     )
+                    lines_schema__all__.append(f'"{python_table_name}",')
 
-                if not lines_db_import:
-                    return
+                lines_db_import.append(f")")
 
-                folder_path = python_rootpath / db_name
+                folder_path = python_rootpath / schema_name
                 folder_path.mkdir(parents=True, exist_ok=True)
                 _write_code_init_file(
                     folder_path,
-                    lines_db_import,
-                    lines_db__all__,
+                    lines_schema_import,
+                    lines_schema__all__,
                 )
+
+            if not lines_db_import:
+                return
+
+            folder_path = python_rootpath
+            folder_path.mkdir(parents=True, exist_ok=True)
+            _write_code_init_file(
+                folder_path,
+                lines_db_import,
+                lines_db__all__,
+            )
 
         case _:
             raise ValueError(

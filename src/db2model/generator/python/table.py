@@ -77,7 +77,6 @@ def _fusion_tables(table_name: str, tables_def: list[TableDef]) -> TableDef:
         raise ValueError(f"No table_def given for {table_name}.")
 
     table_name = tables_def[0].table_name
-    db_name = tables_def[0].db_name
     schema_name = tables_def[0].schema_name
 
     relation_ships: set[str] = set()
@@ -86,10 +85,6 @@ def _fusion_tables(table_name: str, tables_def: list[TableDef]) -> TableDef:
         if table_def.table_name != table_name:
             raise ValueError(
                 f"Table def table name is different from the others {table_name=}, {table_def.table_name}."
-            )
-        if table_def.db_name != db_name:
-            raise ValueError(
-                f"Table def db name is different from the others {table_name=} {db_name=}, {table_def.db_name}."
             )
         if table_def.schema_name != schema_name:
             raise ValueError(
@@ -108,7 +103,6 @@ def _fusion_tables(table_name: str, tables_def: list[TableDef]) -> TableDef:
     return TableDef(
         raw_str=raw_str,
         table_name=table_name,
-        db_name=db_name,
         schema_name=schema_name,
     )
 
