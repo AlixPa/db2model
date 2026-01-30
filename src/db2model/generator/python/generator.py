@@ -31,7 +31,7 @@ def generate_python_models(settings: Db2ModelSettings, logger: Logger) -> None:
 
     match settings.db_settings.sql_dialect:
         case SqlDialect.POSTGRESQL:
-            imports_raw_texts.add("from ...base import Base")
+            imports_raw_texts.add("from ..base import Base")
             for schema_name in settings.schemas:
                 raw_filepath = settings.path_settings.raw_filepath(
                     Language.PYTHON,
